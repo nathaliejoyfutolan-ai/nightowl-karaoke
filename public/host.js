@@ -15,23 +15,65 @@ let dismissTimer = null;
 
 const DEFAULT_PLAYLIST = "PL1YIQKuD6ijT4-gFNqNmLDDtvCuxLt8AC";
 
-const PLAYLIST_SONGS = [
-  { label: "Christina Perri - A Thousand Years",         url: "https://www.youtube.com/watch?v=j1V33b2ZEIo", startTime: "" },
-  { label: "Evanescence - My Immortal",                  url: "https://www.youtube.com/watch?v=Dv4s4KFptCE", startTime: "" },
-  { label: "Lara Fabian - Broken Vow",                   url: "https://www.youtube.com/watch?v=AHxttSwL_Ws", startTime: "" },
-  { label: "Maybe This Time - Sarah Geronimo",           url: "https://www.youtube.com/watch?v=eeQIFrjZGEQ", startTime: "" },
-  { label: "Paramore - The Only Exception",              url: "https://www.youtube.com/watch?v=yCXcs2B8du0", startTime: "" },
-  { label: "The Greatest Showman - A Million Dreams",    url: "https://www.youtube.com/watch?v=fcWSsUQlxhc", startTime: "" },
-  { label: "Evanescence - Bring Me To Life",             url: "https://www.youtube.com/watch?v=8nS4ylMD5xw", startTime: "" },
-  { label: "Katy Perry - The One That Got Away",         url: "https://www.youtube.com/watch?v=47HdJaVBN3U", startTime: "" },
-  { label: "Shania Twain - You're Still the One",        url: "https://www.youtube.com/watch?v=4wXKaFmct8A", startTime: "" },
-  { label: "Taylor Swift - Teardrops On My Guitar",      url: "https://www.youtube.com/watch?v=QsKyGaBouhE", startTime: "" },
-  { label: "Bruno Mars - Risk It All",                   url: "https://www.youtube.com/watch?v=7Eq8P2oLD6E", startTime: "" },
-  { label: "Justin Bieber - That Should Be Me",          url: "https://www.youtube.com/watch?v=q0EIZUstXwI", startTime: "" },
-  { label: "Katharine McPhee - Terrified",               url: "https://www.youtube.com/watch?v=YQiCV3vLD0c", startTime: "" },
-  { label: "Gloc-9 - Upuan",                             url: "https://www.youtube.com/watch?v=2Bz69v5SPss", startTime: "" },
-  { label: "Olivia Rodrigo - drivers license",           url: "https://www.youtube.com/watch?v=C3y6jGCXiUA", startTime: "" },
-];
+// ── Preset song lists per game mode ──────────────────────────────────────────
+const PRESET_SONGS = {
+  // Complete the Lyrics — karaoke versions with lyrics on screen
+  lyrics: [
+    { label: "Christina Perri - A Thousand Years",      url: "https://www.youtube.com/watch?v=j1V33b2ZEIo", startTime: "" },
+    { label: "Evanescence - My Immortal",               url: "https://www.youtube.com/watch?v=Dv4s4KFptCE", startTime: "" },
+    { label: "Lara Fabian - Broken Vow",                url: "https://www.youtube.com/watch?v=AHxttSwL_Ws", startTime: "" },
+    { label: "Maybe This Time - Sarah Geronimo",        url: "https://www.youtube.com/watch?v=eeQIFrjZGEQ", startTime: "" },
+    { label: "Paramore - The Only Exception",           url: "https://www.youtube.com/watch?v=yCXcs2B8du0", startTime: "" },
+    { label: "The Greatest Showman - A Million Dreams", url: "https://www.youtube.com/watch?v=fcWSsUQlxhc", startTime: "" },
+    { label: "Evanescence - Bring Me To Life",          url: "https://www.youtube.com/watch?v=8nS4ylMD5xw", startTime: "" },
+    { label: "Katy Perry - The One That Got Away",      url: "https://www.youtube.com/watch?v=47HdJaVBN3U", startTime: "" },
+    { label: "Shania Twain - You're Still the One",     url: "https://www.youtube.com/watch?v=4wXKaFmct8A", startTime: "" },
+    { label: "Taylor Swift - Teardrops On My Guitar",   url: "https://www.youtube.com/watch?v=QsKyGaBouhE", startTime: "" },
+    { label: "Bruno Mars - Risk It All",                url: "https://www.youtube.com/watch?v=7Eq8P2oLD6E", startTime: "" },
+    { label: "Justin Bieber - That Should Be Me",       url: "https://www.youtube.com/watch?v=q0EIZUstXwI", startTime: "" },
+    { label: "Katharine McPhee - Terrified",            url: "https://www.youtube.com/watch?v=YQiCV3vLD0c", startTime: "" },
+    { label: "Gloc-9 - Upuan",                         url: "https://www.youtube.com/watch?v=2Bz69v5SPss", startTime: "" },
+    { label: "Olivia Rodrigo - drivers license",        url: "https://www.youtube.com/watch?v=C3y6jGCXiUA", startTime: "" },
+  ],
+
+  // Guess the Title — OPM lyric videos (players guess the song title)
+  title: [
+    { label: "Tahanan - El Manu",                       url: "https://www.youtube.com/watch?v=BxPJRAbGOKQ", startTime: "" },
+    { label: "Di Nakakasawa - Arthur Nery",             url: "https://www.youtube.com/watch?v=6DLjRAiPUpM", startTime: "" },
+    { label: "Nandito Ako - Rob Deniel",                url: "https://www.youtube.com/watch?v=8zIJuhNxWZE", startTime: "" },
+    { label: "Pahina - Cup of Joe",                     url: "https://www.youtube.com/watch?v=iEyPl-pZUvY", startTime: "" },
+    { label: "Mundo - IV Of Spades",                    url: "https://www.youtube.com/watch?v=gE0HabpmW0c", startTime: "" },
+    { label: "Multo - Cup of Joe",                      url: "https://www.youtube.com/watch?v=Rht8rS4cR1s", startTime: "" },
+    { label: "Kalapastangan - fitterkarma",             url: "https://www.youtube.com/watch?v=lk5Tg6RB5ew", startTime: "" },
+    { label: "Soapdish - Tensionado",                   url: "https://www.youtube.com/watch?v=T9kDDsu8_9s", startTime: "" },
+    { label: "Panaginip - Nicole",                      url: "https://www.youtube.com/watch?v=k20L76PJ_0g", startTime: "" },
+    { label: "Naiilang - Le John",                      url: "https://www.youtube.com/watch?v=WUvD8XAPI4E", startTime: "" },
+    { label: "Libu-libong Buwan - Kyle Raphael",        url: "https://www.youtube.com/watch?v=tVRfUqyDJyM", startTime: "" },
+    { label: "Since Day One - Skusta Clee ft. Flow G",  url: "https://www.youtube.com/watch?v=l5r8xViCg_M", startTime: "" },
+    { label: "Marilag - Dionela",                       url: "https://www.youtube.com/watch?v=dB44jLpGw3Q", startTime: "" },
+    { label: "Soapdish (MV) - Tensionado",              url: "https://www.youtube.com/watch?v=qXGvxjMa0rE", startTime: "" },
+    { label: "Dilaw - Maki",                            url: "https://www.youtube.com/watch?v=n4RxcA5-YvY", startTime: "" },
+  ],
+
+  // Guess the Artist — OPM songs (players guess who sings it)
+  artist: [
+    { label: "Kalapastangan",                           url: "https://www.youtube.com/watch?v=FpJxPzveHzA", startTime: "" },
+    { label: "Alipin",                                  url: "https://www.youtube.com/watch?v=4d7CZW-ee8I", startTime: "" },
+    { label: "Janice",                                  url: "https://www.youtube.com/watch?v=GT0tn6U2JVE", startTime: "" },
+    { label: "Ikaw At Ako",                             url: "https://www.youtube.com/watch?v=P8bfU6zc9-U", startTime: "" },
+    { label: "I'm Drunk, I Love You",                   url: "https://www.youtube.com/watch?v=uvGN8r0AFkw", startTime: "" },
+    { label: "Panata",                                  url: "https://www.youtube.com/watch?v=cjIJst1SMw8", startTime: "" },
+    { label: "Lalim",                                   url: "https://www.youtube.com/watch?v=4ZeqnhfAStQ", startTime: "" },
+    { label: "Waltz of Four Left Feet",                 url: "https://www.youtube.com/watch?v=SccFEzGkhq8", startTime: "" },
+    { label: "Pahina",                                  url: "https://www.youtube.com/watch?v=o4CWUhaXR2k", startTime: "" },
+    { label: "Walang Kapalit",                          url: "https://www.youtube.com/watch?v=FlZs1_I43bg", startTime: "" },
+    { label: "Kunin Mo Na Ang Lahat Sa Akin",           url: "https://www.youtube.com/watch?v=ipDmvXYyPiM", startTime: "" },
+    { label: "Kung Ako Ba Siya",                        url: "https://www.youtube.com/watch?v=C-cLPMLmBRI", startTime: "" },
+    { label: "Kung Ako Na Lang Sana",                   url: "https://www.youtube.com/watch?v=5YrZP8jeWrE", startTime: "" },
+    { label: "Pusong Ligaw",                            url: "https://www.youtube.com/watch?v=8FzcRQwlA3o", startTime: "" },
+    { label: "Walang Iba",                              url: "https://www.youtube.com/watch?v=eKNADNqGZmI", startTime: "" },
+  ],
+};
 
 /* ─── AVATAR HELPER ─── */
 function makeDefaultAvatar(name, colorIndex) {
@@ -269,6 +311,15 @@ function renderDashboard(state) {
 
 /* ─── SETUP ─── */
 let songListInit = false;
+let lastSongMode = null;
+
+function getPreset(mode, count) {
+  const list = PRESET_SONGS[mode] || [];
+  const rows = list.slice(0, count).map(s => ({ ...s }));
+  while (rows.length < count) rows.push({ label: "", url: "", startTime: "" });
+  return rows;
+}
+
 function renderSetup(state) {
   if (state.selectedGameMode && gameModes[state.selectedGameMode]) {
     document.getElementById("setupModeLabel").textContent = gameModes[state.selectedGameMode].label;
@@ -277,16 +328,17 @@ function renderSetup(state) {
   document.getElementById("startGameBtn").disabled =
     Object.keys(state.players || {}).length === 0 || !state.selectedGameMode;
 
-  // Init song rows from state on first load
-  if (!songListInit) {
+  const rounds = parseInt(document.getElementById("roundsRange").value) || state.totalRounds || 5;
+  const mode = state.selectedGameMode;
+
+  // Init song rows on first load OR when game mode switches
+  if (!songListInit || (mode && mode !== lastSongMode)) {
     songListInit = true;
-    const rounds = state.totalRounds || 5;
-    if (state.songs?.length) {
+    lastSongMode = mode;
+    if (state.songs?.length && mode === lastSongMode) {
       syncSongListFromState(state);
     } else {
-      // Pre-fill from playlist songs, trimmed to round count
-      songRows = PLAYLIST_SONGS.slice(0, rounds).map(s => ({ ...s }));
-      while (songRows.length < rounds) songRows.push({ label: "", url: "", startTime: "" });
+      songRows = getPreset(mode, rounds);
       buildSongRows(document.getElementById("songList"));
     }
     // Keep rows in sync when rounds slider changes
@@ -675,8 +727,10 @@ let songRows = []; // [{ label, url, startTime }]
 
 function renderSongList(count) {
   const container = document.getElementById("songList");
+  const mode = currentState?.selectedGameMode;
+  const preset = PRESET_SONGS[mode] || [];
   while (songRows.length < count) {
-    const next = PLAYLIST_SONGS[songRows.length] || { label: "", url: "", startTime: "" };
+    const next = preset[songRows.length] || { label: "", url: "", startTime: "" };
     songRows.push({ ...next });
   }
   if (songRows.length > count) songRows = songRows.slice(0, count);
