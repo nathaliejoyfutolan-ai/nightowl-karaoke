@@ -15,6 +15,24 @@ let dismissTimer = null;
 
 const DEFAULT_PLAYLIST = "PL1YIQKuD6ijT4-gFNqNmLDDtvCuxLt8AC";
 
+const PLAYLIST_SONGS = [
+  { label: "Christina Perri - A Thousand Years",         url: "https://www.youtube.com/watch?v=j1V33b2ZEIo", startTime: "" },
+  { label: "Evanescence - My Immortal",                  url: "https://www.youtube.com/watch?v=Dv4s4KFptCE", startTime: "" },
+  { label: "Lara Fabian - Broken Vow",                   url: "https://www.youtube.com/watch?v=AHxttSwL_Ws", startTime: "" },
+  { label: "Maybe This Time - Sarah Geronimo",           url: "https://www.youtube.com/watch?v=eeQIFrjZGEQ", startTime: "" },
+  { label: "Paramore - The Only Exception",              url: "https://www.youtube.com/watch?v=yCXcs2B8du0", startTime: "" },
+  { label: "The Greatest Showman - A Million Dreams",    url: "https://www.youtube.com/watch?v=fcWSsUQlxhc", startTime: "" },
+  { label: "Evanescence - Bring Me To Life",             url: "https://www.youtube.com/watch?v=8nS4ylMD5xw", startTime: "" },
+  { label: "Katy Perry - The One That Got Away",         url: "https://www.youtube.com/watch?v=47HdJaVBN3U", startTime: "" },
+  { label: "Shania Twain - You're Still the One",        url: "https://www.youtube.com/watch?v=4wXKaFmct8A", startTime: "" },
+  { label: "Taylor Swift - Teardrops On My Guitar",      url: "https://www.youtube.com/watch?v=QsKyGaBouhE", startTime: "" },
+  { label: "Bruno Mars - Risk It All",                   url: "https://www.youtube.com/watch?v=7Eq8P2oLD6E", startTime: "" },
+  { label: "Justin Bieber - That Should Be Me",          url: "https://www.youtube.com/watch?v=q0EIZUstXwI", startTime: "" },
+  { label: "Katharine McPhee - Terrified",               url: "https://www.youtube.com/watch?v=YQiCV3vLD0c", startTime: "" },
+  { label: "Gloc-9 - Upuan",                             url: "https://www.youtube.com/watch?v=2Bz69v5SPss", startTime: "" },
+  { label: "Olivia Rodrigo - drivers license",           url: "https://www.youtube.com/watch?v=C3y6jGCXiUA", startTime: "" },
+];
+
 /* ─── AVATAR HELPER ─── */
 function makeDefaultAvatar(name, colorIndex) {
   const colors = ["#b44fff","#00d4ff","#ff3fa4","#00ff88","#ffd700","#ff6b35","#7c3aed","#06b6d4"];
@@ -261,7 +279,10 @@ function renderSetup(state) {
     if (state.songs?.length) {
       syncSongListFromState(state);
     } else {
-      renderSongList(rounds);
+      // Pre-fill from playlist songs, trimmed to round count
+      songRows = PLAYLIST_SONGS.slice(0, rounds).map(s => ({ ...s }));
+      while (songRows.length < rounds) songRows.push({ label: "", url: "", startTime: "" });
+      buildSongRows(document.getElementById("songList"));
     }
     // Keep rows in sync when rounds slider changes
     document.getElementById("roundsRange").addEventListener("input", () => {
@@ -649,8 +670,10 @@ let songRows = []; // [{ label, url, startTime }]
 
 function renderSongList(count) {
   const container = document.getElementById("songList");
-  // Sync array length to count
-  while (songRows.length < count) songRows.push({ label: "", url: "", startTime: "" });
+  while (songRows.length < count) {
+    const next = PLAYLIST_SONGS[songRows.length] || { label: "", url: "", startTime: "" };
+    songRows.push({ ...next });
+  }
   if (songRows.length > count) songRows = songRows.slice(0, count);
   buildSongRows(container);
 }
