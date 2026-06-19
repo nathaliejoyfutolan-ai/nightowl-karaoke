@@ -262,6 +262,32 @@ function renderGamePad(state) {
     }
   }
 
+  // ─── Video player sync ───
+  const songs = state.songs || [];
+  const currentSong = songs[state.currentTurnIndex || 0];
+  const videoId = currentSong?.videoId;
+  const pVideoWrap = document.getElementById("pVideoWrap");
+  const pVideoContainer = document.getElementById("pVideoContainer");
+  const pVideoBlur = document.getElementById("pVideoBlur");
+  const showVideo = !!(videoId && state.gameStarted &&
+    ["listening","blurred_continue","paused_ready","challenge","time_up","revealed","judged_correct","judged_wrong"].includes(phase));
+
+  if (showVideo) {
+    pVideoWrap.style.display = "block";
+    const existing = pVideoContainer.querySelector("iframe");
+    if (existing?.dataset.vid !== videoId) {
+      const start = Math.max(0, Math.floor(currentSong.startTime || 0));
+      pVideoContainer.innerHTML = `<iframe data-vid="${videoId}"
+        src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&start=${start}&rel=0&playsinline=1"
+        width="100%" height="100%" frameborder="0"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+        allowfullscreen style="border:none;"></iframe>`;
+    }
+    pVideoBlur.style.display = state.isBlurred ? "flex" : "none";
+  } else {
+    pVideoWrap.style.display = "none";
+  }
+
   // Hint
   const hintEl = document.getElementById("pHintText");
   if (state.currentHint && ["challenge","time_up","revealed","judged_correct","judged_wrong"].includes(phase)) {

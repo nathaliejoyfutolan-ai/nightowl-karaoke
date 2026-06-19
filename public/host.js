@@ -58,33 +58,38 @@ function makeRoomCode() {
   return "OWL" + Math.floor(100 + Math.random() * 900);
 }
 
-/* ─── YOUTUBE API ─── */
-window.onYouTubeIframeAPIReady = function () {
+/* ─── YOUTUBE PLAYER (direct iframe — works on all domains) ─── */
+let ytIframe = null;
+
+function loadVideoDirectly(videoId, startSeconds) {
+  if (!videoId) return;
+  const container = document.getElementById("ytPlayer");
+  const start = Math.max(0, Math.floor(startSeconds || 0));
+  container.innerHTML = `<iframe id="ytDirectIframe"
+    src="https://www.youtube.com/embed/${videoId}?autoplay=1&start=${start}&rel=0&playsinline=1&enablejsapi=1"
+    width="100%" height="100%" frameborder="0"
+    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+    allowfullscreen></iframe>`;
+  ytIframe = document.getElementById("ytDirectIframe");
+  // Provide postMessage-based controls so existing play/pause buttons keep working
+  ytPlayer = {
+    playVideo:    () => ytIframe?.contentWindow?.postMessage('{"event":"command","func":"playVideo","args":""}', '*'),
+    pauseVideo:   () => ytIframe?.contentWindow?.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*'),
+    seekTo:       (t) => ytIframe?.contentWindow?.postMessage(`{"event":"command","func":"seekTo","args":[${t},true]}`, '*'),
+    loadVideoById:({ videoId: v, startSeconds: s }) => loadVideoDirectly(v, s || 0),
+    loadPlaylist: () => {},
+  };
   ytReady = true;
-  ytPlayer = new YT.Player("ytPlayer", {
-    height: "100%", width: "100%",
-    playerVars: { rel: 0, playsinline: 1, autoplay: 1, origin: window.location.origin },
-    events: { onReady: onPlayerReady, onError: onPlayerError }
-  });
-};
-
-function onPlayerReady() {
-  console.log("YouTube player ready, origin:", window.location.origin);
-  if (currentState?.playlistId) {
-    ytPlayer.loadPlaylist({ list: currentState.playlistId, listType: "playlist" });
-  }
 }
 
-function onPlayerError(e) {
-  console.error("YouTube player error:", e.data);
-}
+/* Keep YouTube API as optional fallback for playlist mode */
+window.onYouTubeIframeAPIReady = function () { ytReady = true; };
 
-function ytPlay(startTime)  {
-  if (!ytPlayer?.playVideo) return;
-  if (startTime > 0) ytPlayer.seekTo(startTime, true);
-  ytPlayer.playVideo();
+function ytPlay(startTime) {
+  if (startTime > 0 && ytPlayer?.seekTo) ytPlayer.seekTo(startTime);
+  ytPlayer?.playVideo?.();
 }
-function ytPause() { if (ytPlayer?.pauseVideo) ytPlayer.pauseVideo(); }
+function ytPause() { ytPlayer?.pauseVideo?.(); }
 
 /* Parse "1:23" or "83" → seconds */
 function parseTime(val) {
@@ -882,13 +887,7 @@ document.getElementById("startTurnBtn").addEventListener("click", () => {
   const startTime = song?.startTime ?? manualStartTime;
 
   if (song?.videoId) {
-    // Load the specific video for this round then play from startTime
-    if (ytPlayer?.loadVideoById) {
-      ytPlayer.loadVideoById({ videoId: song.videoId, startSeconds: startTime });
-    } else {
-      ytPlay(startTime);
-    }
-    // Show song label in a toast
+    loadVideoDirectly(song.videoId, startTime);
     if (song.label) showToast(`🎵 ${song.label}`);
   } else {
     ytPlay(startTime);

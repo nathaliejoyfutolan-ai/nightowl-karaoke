@@ -65,6 +65,14 @@
     <!-- ─── GAME PAD (after joining) ─── -->
     <div class="game-pad" id="gamePad">
 
+      <!-- ─── VIDEO PLAYER ─── -->
+      <div id="pVideoWrap" style="display:none;position:relative;border-radius:12px;overflow:hidden;margin-bottom:14px;background:#000;aspect-ratio:16/9;">
+        <div id="pVideoContainer" style="width:100%;height:100%;"></div>
+        <div id="pVideoBlur" style="display:none;position:absolute;inset:0;backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);background:rgba(7,7,26,0.55);display:none;align-items:center;justify-content:center;gap:12px;font-size:1.4rem;flex-direction:column;">
+          <span>🙈</span><span style="font-size:0.9rem;color:#fff;font-weight:700;letter-spacing:1px;">LISTEN CAREFULLY…</span>
+        </div>
+      </div>
+
       <!-- Mode pill -->
       <div id="modePill" class="mode-info-pill" style="display:none;">
         <span id="modeIcon">🎤</span>
