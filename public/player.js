@@ -11,6 +11,7 @@ let myRoomCode = "";
 let joined = false;
 let currentState = null;
 let selectedAvatarDataUrl = null;
+let lastVideoId = null;
 
 /* ─── PRE-FILL ROOM CODE FROM URL ─── */
 if (roomFromUrl) {
@@ -98,7 +99,6 @@ function buildDefaultAvatarGrid() {
 (function init() {
   buildDefaultAvatarGrid();
 
-  // Set initial avatar preview using first letter default
   const nameInput = document.getElementById("playerNameInput");
   const preview   = document.getElementById("avatarPreview");
   preview.src = generateDefaultAvatar("?", Math.floor(Math.random() * 10));
@@ -109,7 +109,6 @@ function buildDefaultAvatarGrid() {
     }
   });
 
-  // Upload photo
   document.getElementById("uploadBtn").addEventListener("click", () => {
     document.getElementById("uploadInput").click();
   });
@@ -117,14 +116,10 @@ function buildDefaultAvatarGrid() {
     const file = e.target.files[0];
     if (!file) return;
     const resized = await resizeImage(file);
-    if (resized) {
-      selectedAvatarDataUrl = resized;
-      document.getElementById("avatarPreview").src = resized;
-    }
+    if (resized) { selectedAvatarDataUrl = resized; document.getElementById("avatarPreview").src = resized; }
     e.target.value = "";
   });
 
-  // Take photo
   document.getElementById("cameraBtn").addEventListener("click", () => {
     document.getElementById("cameraInput").click();
   });
@@ -132,44 +127,42 @@ function buildDefaultAvatarGrid() {
     const file = e.target.files[0];
     if (!file) return;
     const resized = await resizeImage(file);
-    if (resized) {
-      selectedAvatarDataUrl = resized;
-      document.getElementById("avatarPreview").src = resized;
-    }
+    if (resized) { selectedAvatarDataUrl = resized; document.getElementById("avatarPreview").src = resized; }
     e.target.value = "";
   });
 
-  // Show default avatar grid
   document.getElementById("defaultAvatarBtn").addEventListener("click", () => {
     const grid = document.getElementById("defaultAvatars");
     grid.style.display = grid.style.display === "none" ? "flex" : "none";
   });
 
-  // Join button
   document.getElementById("joinBtn").addEventListener("click", joinGame);
 
-  // Floating notes
   spawnNotes();
 })();
 
 function joinGame() {
-  const roomCode  = document.getElementById("roomCodeInput").value.trim().toUpperCase();
+  const roomCode   = document.getElementById("roomCodeInput").value.trim().toUpperCase();
   const playerName = document.getElementById("playerNameInput").value.trim();
 
-  if (!roomCode)    { alert("Please enter a room code."); return; }
-  if (!playerName)  { alert("Please enter your name."); return; }
+  if (!roomCode)   { alert("Please enter a room code."); return; }
+  if (!playerName) { alert("Please enter your name."); return; }
 
   myRoomCode = roomCode;
-
-  // Use selected avatar or generate from name
   const avatar = selectedAvatarDataUrl || generateDefaultAvatar(playerName, Math.floor(Math.random() * 10));
 
   socket.emit("player:join", { roomCode, playerName, avatar });
   joined = true;
 
-  // Switch to game pad
-  document.getElementById("joinForm").style.display = "none";
-  document.getElementById("gamePad").classList.add("visible");
+  // Hide join form, show game screen
+  document.getElementById("joinWrap").style.display = "none";
+  document.getElementById("bgScene").style.display = "none";
+  document.getElementById("musicNotes").style.display = "none";
+
+  const gs = document.getElementById("gameScreen");
+  gs.style.display = "flex";
+
+  document.getElementById("headerRoomCode").textContent = roomCode;
 }
 
 /* ─── SOCKET EVENTS ─── */
@@ -187,16 +180,15 @@ socket.on("timer:tick", ({ timer, timerType }) => {
 
 /* ─── RENDER GAME PAD ─── */
 function renderGamePad(state) {
-  const phase    = state.gamePhase || "lobby";
-  const players  = state.players || {};
-  const myPlayer = players[myId];
-  const isMyTurn = state.activePlayerId === myId;
+  const phase       = state.gamePhase || "lobby";
+  const players     = state.players || {};
+  const myPlayer    = players[myId];
+  const isMyTurn    = state.activePlayerId === myId;
   const activePlayer = players[state.activePlayerId];
-  const allPlayers = Object.values(players);
-  const myIdx = allPlayers.findIndex(p => p.id === myId);
-  const activeIdx = allPlayers.findIndex(p => p.id === state.activePlayerId);
+  const allPlayers  = Object.values(players);
+  const activeIdx   = allPlayers.findIndex(p => p.id === state.activePlayerId);
 
-  // Game mode pill
+  // Mode pill
   const modePill = document.getElementById("modePill");
   if (state.selectedGameMode && state.selectedGameLabel) {
     modePill.style.display = "inline-flex";
@@ -206,120 +198,99 @@ function renderGamePad(state) {
     modePill.style.display = "none";
   }
 
-  // Waiting message
-  const waitingMsg   = document.getElementById("waitingMsg");
-  const myTurnBanner = document.getElementById("myTurnBanner");
-  const timerBlock   = document.getElementById("timerBlock");
-  const pActiveCard  = document.getElementById("pActiveCard");
+  // Phase banner
+  setPhaseBanner(phase, isMyTurn);
 
-  const gameActive = state.gameStarted && phase !== "game_complete";
+  // Sections
+  const waitingMsg      = document.getElementById("waitingMsg");
+  const myTurnSection   = document.getElementById("myTurnSection");
+  const pActiveSection  = document.getElementById("pActiveSection");
+  const timerBlock      = document.getElementById("timerBlock");
+  const pHintSection    = document.getElementById("pHintSection");
+  const pJudgementSection = document.getElementById("pJudgementSection");
 
   if (!state.gameStarted) {
     waitingMsg.style.display = "block";
     waitingMsg.innerHTML = state.selectedGameMode
-      ? `<p style="font-weight:700;font-size:1rem;">🎮 Game selected: <span style="color:var(--purple)">${state.selectedGameLabel}</span></p><p class="status-text mt-8">${state.selectedInstructions || "Waiting for host to start…"}</p>`
+      ? `<p style="font-weight:700;font-size:1rem;">🎮 <span style="color:var(--purple)">${state.selectedGameLabel}</span></p><p class="status-text" style="margin-top:6px;">${state.selectedInstructions || "Waiting for host to start…"}</p>`
       : `<p class="status-text">Waiting for host to choose a game mode…</p>`;
-    myTurnBanner.style.display = "none";
-    timerBlock.style.display   = "none";
-    pActiveCard.style.display  = "none";
+    myTurnSection.style.display  = "none";
+    pActiveSection.style.display = "none";
+    timerBlock.style.display     = "none";
+    pHintSection.style.display   = "none";
+    pJudgementSection.style.display = "none";
   } else {
     waitingMsg.style.display = "none";
 
     // My turn banner
     if (isMyTurn && ["challenge","time_up","listening","blurred_continue","paused_ready","game_started"].includes(phase)) {
-      myTurnBanner.style.display = "block";
+      myTurnSection.style.display = "block";
       document.getElementById("challengeText").textContent = state.selectedChallengeText || "It's your turn!";
     } else {
-      myTurnBanner.style.display = "none";
+      myTurnSection.style.display = "none";
     }
 
-    // Answer timer (only show for active player during challenge)
-    if (isMyTurn && state.timerType === "answer" && phase === "challenge") {
+    // Active player card (show when it's not my turn and game is active)
+    if (activePlayer && !isMyTurn && phase !== "game_complete") {
+      pActiveSection.style.display = "block";
+      document.getElementById("pActiveAvatar").src = avatarSrc(activePlayer, activeIdx);
+      document.getElementById("pActiveName").textContent = activePlayer.name;
+      document.getElementById("pRoundLabel").textContent = `Round ${state.currentRound || 1} / ${state.totalRounds || 5}`;
+    } else {
+      pActiveSection.style.display = "none";
+    }
+
+    // Timer
+    if (phase === "challenge") {
       timerBlock.style.display = "block";
-      renderAnswerTimer(state.timer);
-    } else if (!isMyTurn && phase === "challenge") {
-      timerBlock.style.display = "block";
-      renderAnswerTimer(state.timer);
+      renderAnswerTimer(state.timer || 20);
     } else if (phase === "time_up") {
       timerBlock.style.display = "block";
       document.getElementById("pTimerVal").textContent = "0";
       document.getElementById("pTimerVal").className = "p-timer-val urgent";
-      document.getElementById("timerHurry").style.display = "none";
     } else {
       timerBlock.style.display = "none";
     }
 
-    // Active player card (show when it's not my turn)
-    if (activePlayer && !isMyTurn) {
-      pActiveCard.style.display = "flex";
-      document.getElementById("pActiveAvatar").src = avatarSrc(activePlayer, activeIdx);
-      document.getElementById("pActiveName").textContent = activePlayer.name;
-      document.getElementById("pRoundLabel").textContent = `Round ${state.currentRound || 1} / ${state.totalRounds || 5}`;
-    } else if (isMyTurn) {
-      pActiveCard.style.display = "none";
+    // Hint
+    const hintEl = document.getElementById("pHintText");
+    if (state.currentHint && ["challenge","time_up","revealed","judged_correct","judged_wrong"].includes(phase)) {
+      pHintSection.style.display = "block";
+      hintEl.textContent = `Hint: ${state.currentHint}`;
     } else {
-      pActiveCard.style.display = "none";
+      pHintSection.style.display = "none";
+    }
+
+    // Judgement
+    const judgeEl = document.getElementById("pJudgement");
+    if (phase === "judged_correct") {
+      pJudgementSection.style.display = "block";
+      judgeEl.className = "p-judgement show correct";
+      judgeEl.textContent = isMyTurn ? "✅ CORRECT! +100" : `✅ ${activePlayer?.name || "Player"} got it!`;
+    } else if (phase === "judged_wrong") {
+      pJudgementSection.style.display = "block";
+      judgeEl.className = "p-judgement show wrong";
+      judgeEl.textContent = isMyTurn ? "❌ WRONG!" : `❌ ${activePlayer?.name || "Player"} missed it.`;
+    } else if (phase === "time_up") {
+      pJudgementSection.style.display = "block";
+      judgeEl.className = "p-judgement show wrong";
+      judgeEl.textContent = "⏰ Time's Up!";
+    } else {
+      pJudgementSection.style.display = "none";
+      judgeEl.className = "p-judgement";
     }
   }
 
-  // ─── Video player sync ───
-  const songs = state.songs || [];
-  const currentSong = songs[state.currentTurnIndex || 0];
-  const videoId = currentSong?.videoId;
-  const pVideoWrap = document.getElementById("pVideoWrap");
-  const pVideoContainer = document.getElementById("pVideoContainer");
-  const pVideoBlur = document.getElementById("pVideoBlur");
-  const showVideo = !!(videoId && state.gameStarted &&
-    ["listening","blurred_continue","paused_ready","challenge","time_up","revealed","judged_correct","judged_wrong"].includes(phase));
-
-  if (showVideo) {
-    pVideoWrap.style.display = "block";
-    const existing = pVideoContainer.querySelector("iframe");
-    if (existing?.dataset.vid !== videoId) {
-      const start = Math.max(0, Math.floor(currentSong.startTime || 0));
-      pVideoContainer.innerHTML = `<iframe data-vid="${videoId}"
-        src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&start=${start}&rel=0&playsinline=1"
-        width="100%" height="100%" frameborder="0"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
-        allowfullscreen style="border:none;"></iframe>`;
-    }
-    pVideoBlur.style.display = state.isBlurred ? "flex" : "none";
-  } else {
-    pVideoWrap.style.display = "none";
-  }
-
-  // Hint
-  const hintEl = document.getElementById("pHintText");
-  if (state.currentHint && ["challenge","time_up","revealed","judged_correct","judged_wrong"].includes(phase)) {
-    hintEl.style.display = "block";
-    hintEl.textContent = `Hint: ${state.currentHint}`;
-  } else {
-    hintEl.style.display = "none";
-  }
-
-  // Judgement
-  const judgeEl = document.getElementById("pJudgement");
-  if (phase === "judged_correct") {
-    judgeEl.className = "p-judgement show correct";
-    judgeEl.textContent = isMyTurn ? "✅ CORRECT! +100" : `✅ ${activePlayer?.name || "Player"} got it!`;
-  } else if (phase === "judged_wrong") {
-    judgeEl.className = "p-judgement show wrong";
-    judgeEl.textContent = isMyTurn ? "❌ WRONG!" : `❌ ${activePlayer?.name || "Player"} missed it.`;
-  } else if (phase === "time_up") {
-    judgeEl.className = "p-judgement show wrong";
-    judgeEl.textContent = "⏰ Time's Up!";
-  } else {
-    judgeEl.className = "p-judgement";
-  }
+  // ─── Video ───
+  syncVideo(state, phase);
 
   // My score & rank
-  const myScore = myPlayer?.score || 0;
+  const myScore  = myPlayer?.score || 0;
   document.getElementById("myScore").textContent = myScore;
-  const sorted = allPlayers.sort((a, b) => (b.score || 0) - (a.score || 0));
+  const sorted = [...allPlayers].sort((a, b) => (b.score || 0) - (a.score || 0));
   const myRank = sorted.findIndex(p => p.id === myId) + 1;
   document.getElementById("myRank").textContent = myRank > 0 ? `#${myRank}` : "—";
 
-  // Leaderboard
   renderMiniLb(sorted);
 
   // Game complete
@@ -333,12 +304,78 @@ function renderGamePad(state) {
   }
 }
 
+function syncVideo(state, phase) {
+  const songs = state.songs || [];
+  const currentSong = songs[state.currentTurnIndex || 0];
+  const videoId = currentSong?.videoId;
+
+  const pVideoContainer = document.getElementById("pVideoContainer");
+  const pVideoBlur      = document.getElementById("pVideoBlur");
+  const pNoVideo        = document.getElementById("pNoVideo");
+
+  const videoPhases = ["listening","blurred_continue","paused_ready","challenge","time_up","revealed","judged_correct","judged_wrong"];
+  const showVideo = !!(videoId && state.gameStarted && videoPhases.includes(phase));
+
+  if (showVideo) {
+    pNoVideo.style.display = "none";
+    pVideoContainer.style.display = "block";
+
+    // Only reinject iframe if the video changed
+    if (lastVideoId !== videoId) {
+      lastVideoId = videoId;
+      const start = Math.max(0, Math.floor(currentSong.startTime || 0));
+      // Keep blur overlay inside container, inject iframe before it
+      const blurEl = pVideoContainer.querySelector("#pVideoBlur");
+      pVideoContainer.innerHTML = `<iframe data-vid="${videoId}"
+        src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&start=${start}&rel=0&playsinline=1"
+        style="position:absolute;inset:0;width:100%;height:100%;border:none;"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; autoplay"
+        allowfullscreen></iframe>`;
+      // Re-add blur overlay
+      const blur = document.createElement("div");
+      blur.id = "pVideoBlur";
+      blur.innerHTML = `<span>🙈</span><span class="blur-sub">LISTEN CAREFULLY…</span>`;
+      pVideoContainer.appendChild(blur);
+    }
+
+    const blurOverlay = document.getElementById("pVideoBlur");
+    if (blurOverlay) blurOverlay.style.display = state.isBlurred ? "flex" : "none";
+  } else {
+    pNoVideo.style.display = "flex";
+    pVideoContainer.style.display = "none";
+    if (lastVideoId !== null) {
+      lastVideoId = null;
+      pVideoContainer.innerHTML = `<div id="pVideoBlur"><span>🙈</span><span class="blur-sub">LISTEN CAREFULLY…</span></div>`;
+    }
+  }
+}
+
+function setPhaseBanner(phase, isMyTurn) {
+  const banner = document.getElementById("pPhaseBanner");
+  if (!banner) return;
+  const map = {
+    lobby:            ["ph-lobby",    "Waiting for host…"],
+    game_started:     ["ph-listening","Game Starting!"],
+    listening:        ["ph-listening","🎵 Listen to the song…"],
+    blurred_continue: ["ph-blurred",  "🙈 Video blurred — keep listening…"],
+    paused_ready:     ["ph-challenge","Get ready to answer!"],
+    challenge:        ["ph-challenge", isMyTurn ? "🎤 YOUR TURN — answer out loud!" : "⏱ Player is answering…"],
+    time_up:          ["ph-wrong",    "⏰ Time's Up!"],
+    revealed:         ["ph-listening","🔍 Revealing answer…"],
+    judged_correct:   ["ph-correct",  "✅ Correct!"],
+    judged_wrong:     ["ph-wrong",    "❌ Wrong!"],
+    game_complete:    ["ph-complete", "🏆 Game Over!"],
+  };
+  const [cls, text] = map[phase] || ["ph-lobby", phase];
+  banner.className = `player-phase-banner ${cls}`;
+  banner.textContent = text;
+}
+
 function renderAnswerTimer(timer) {
   const el = document.getElementById("pTimerVal");
-  const hurry = document.getElementById("timerHurry");
+  if (!el) return;
   el.textContent = timer;
   el.className = "p-timer-val" + (timer <= 5 ? " urgent" : "");
-  hurry.style.display = timer <= 5 && timer > 0 ? "block" : "none";
 }
 
 function renderMiniLb(sorted) {

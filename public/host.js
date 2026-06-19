@@ -17,23 +17,23 @@ const DEFAULT_PLAYLIST = "PL1YIQKuD6ijT4-gFNqNmLDDtvCuxLt8AC";
 
 // ── Preset song lists per game mode ──────────────────────────────────────────
 const PRESET_SONGS = {
-  // Complete the Lyrics — karaoke versions with lyrics on screen
+  // Complete the Lyrics — official lyric videos (allow embedding)
   lyrics: [
-    { label: "Christina Perri - A Thousand Years",      url: "https://www.youtube.com/watch?v=j1V33b2ZEIo", startTime: "" },
-    { label: "Evanescence - My Immortal",               url: "https://www.youtube.com/watch?v=Dv4s4KFptCE", startTime: "" },
-    { label: "Lara Fabian - Broken Vow",                url: "https://www.youtube.com/watch?v=AHxttSwL_Ws", startTime: "" },
-    { label: "Maybe This Time - Sarah Geronimo",        url: "https://www.youtube.com/watch?v=eeQIFrjZGEQ", startTime: "" },
-    { label: "Paramore - The Only Exception",           url: "https://www.youtube.com/watch?v=yCXcs2B8du0", startTime: "" },
-    { label: "The Greatest Showman - A Million Dreams", url: "https://www.youtube.com/watch?v=fcWSsUQlxhc", startTime: "" },
-    { label: "Evanescence - Bring Me To Life",          url: "https://www.youtube.com/watch?v=8nS4ylMD5xw", startTime: "" },
-    { label: "Katy Perry - The One That Got Away",      url: "https://www.youtube.com/watch?v=47HdJaVBN3U", startTime: "" },
-    { label: "Shania Twain - You're Still the One",     url: "https://www.youtube.com/watch?v=4wXKaFmct8A", startTime: "" },
-    { label: "Taylor Swift - Teardrops On My Guitar",   url: "https://www.youtube.com/watch?v=QsKyGaBouhE", startTime: "" },
-    { label: "Bruno Mars - Risk It All",                url: "https://www.youtube.com/watch?v=7Eq8P2oLD6E", startTime: "" },
-    { label: "Justin Bieber - That Should Be Me",       url: "https://www.youtube.com/watch?v=q0EIZUstXwI", startTime: "" },
-    { label: "Katharine McPhee - Terrified",            url: "https://www.youtube.com/watch?v=YQiCV3vLD0c", startTime: "" },
+    { label: "Christina Perri - A Thousand Years",      url: "https://www.youtube.com/watch?v=QcIy9NiNbmo", startTime: "" },
+    { label: "Evanescence - My Immortal",               url: "https://www.youtube.com/watch?v=wr4g9NeqS5o", startTime: "" },
+    { label: "Paramore - The Only Exception",           url: "https://www.youtube.com/watch?v=lnOuAG_vf04", startTime: "" },
+    { label: "A Million Dreams - The Greatest Showman", url: "https://www.youtube.com/watch?v=pSQk-4fddDI", startTime: "" },
+    { label: "Evanescence - Bring Me To Life",          url: "https://www.youtube.com/watch?v=3YxaaGgTQl8", startTime: "" },
+    { label: "Katy Perry - The One That Got Away",      url: "https://www.youtube.com/watch?v=cWHL7VlbAnM", startTime: "" },
+    { label: "Shania Twain - You're Still the One",     url: "https://www.youtube.com/watch?v=A_9kU5yiE4g", startTime: "" },
+    { label: "Taylor Swift - Teardrops On My Guitar",   url: "https://www.youtube.com/watch?v=sEhy-RXkNo0", startTime: "" },
+    { label: "Bruno Mars - It Will Rain",               url: "https://www.youtube.com/watch?v=X-yItGbCDnk", startTime: "" },
+    { label: "Justin Bieber - Love Yourself",           url: "https://www.youtube.com/watch?v=oyEuk8j8imI", startTime: "" },
+    { label: "Katharine McPhee - Terrified",            url: "https://www.youtube.com/watch?v=5hprMl-ABSY", startTime: "" },
     { label: "Gloc-9 - Upuan",                         url: "https://www.youtube.com/watch?v=2Bz69v5SPss", startTime: "" },
-    { label: "Olivia Rodrigo - drivers license",        url: "https://www.youtube.com/watch?v=C3y6jGCXiUA", startTime: "" },
+    { label: "Olivia Rodrigo - drivers license",        url: "https://www.youtube.com/watch?v=ZmDBbnmKpqQ", startTime: "" },
+    { label: "Adele - Someone Like You",                url: "https://www.youtube.com/watch?v=hLQl3WQQoQ0", startTime: "" },
+    { label: "Ed Sheeran - Perfect",                    url: "https://www.youtube.com/watch?v=2Vv-BfVoq4g", startTime: "" },
   ],
 
   // Guess the Title — OPM lyric videos (players guess the song title)
