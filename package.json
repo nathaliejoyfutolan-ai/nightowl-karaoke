@@ -1,0 +1,13 @@
+{
+  "name": "karaoke-lyrics-buzzer-game",
+  "version": "1.0.0",
+  "description": "Browser-based karaoke lyrics completion game with YouTube playlist embed and multiplayer buzzers.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "socket.io": "^4.7.5"
+  }
+}

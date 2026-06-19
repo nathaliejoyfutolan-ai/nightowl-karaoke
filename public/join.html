@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Join NightOwl Karaoke 🦉</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body class="join-body">
+
+<!-- Animated background -->
+<div class="bg-scene">
+  <div class="bg-orb o1"></div>
+  <div class="bg-orb o2"></div>
+  <div class="bg-orb o3"></div>
+</div>
+<div class="music-notes" id="musicNotes"></div>
+
+<div class="join-wrap">
+  <div class="join-card" id="joinCard">
+
+    <!-- ─── JOIN FORM ─── -->
+    <div id="joinForm">
+      <span class="eyebrow">🦉 NightOwl Karaoke Game Night</span>
+      <h1>Join the Game 🎶</h1>
+      <p class="status-text" style="margin:6px 0 18px;">Enter the room code your host shared.</p>
+
+      <label>Room Code</label>
+      <input type="text" id="roomCodeInput" placeholder="e.g. OWL123" style="text-transform:uppercase;letter-spacing:3px;font-weight:700;" />
+
+      <label>Your Name</label>
+      <input type="text" id="playerNameInput" placeholder="Your name or nickname" maxlength="24" />
+
+      <label>Avatar / Photo</label>
+      <div class="avatar-picker">
+        <div class="avatar-preview-wrap">
+          <img class="avatar-preview" id="avatarPreview" src="" alt="avatar" />
+          <div>
+            <div class="avatar-btns">
+              <button class="avatar-btn" id="uploadBtn">📁 Upload Photo</button>
+              <button class="avatar-btn" id="cameraBtn">📷 Take Photo</button>
+            </div>
+            <div class="avatar-btns" style="margin-top:6px;">
+              <button class="avatar-btn" id="defaultAvatarBtn">🎨 Use Default</button>
+            </div>
+          </div>
+        </div>
+        <!-- Hidden file inputs -->
+        <input type="file" class="hidden-file" id="uploadInput" accept="image/*" />
+        <input type="file" class="hidden-file" id="cameraInput" accept="image/*" capture="user" />
+
+        <!-- Default avatars -->
+        <div class="default-avatars" id="defaultAvatars" style="display:none;"></div>
+      </div>
+
+      <button class="btn btn-primary" id="joinBtn" style="width:100%;justify-content:center;font-size:1rem;padding:14px;">
+        🎤 Join Game
+      </button>
+      <p class="status-text italic" style="margin-top:10px;font-size:0.8rem;">
+        You can join at any time. Wait for your turn — then answer within 20 seconds.
+      </p>
+    </div>
+
+    <!-- ─── GAME PAD (after joining) ─── -->
+    <div class="game-pad" id="gamePad">
+
+      <!-- Mode pill -->
+      <div id="modePill" class="mode-info-pill" style="display:none;">
+        <span id="modeIcon">🎤</span>
+        <span id="modeLabelText">Complete the Lyrics</span>
+      </div>
+
+      <!-- Waiting message (before game starts) -->
+      <div id="waitingMsg" class="player-status-card" style="text-align:center;">
+        <p style="font-size:1.1rem;font-weight:700;margin-bottom:6px;">You're in! 🎉</p>
+        <p class="status-text">Waiting for the host to start…</p>
+      </div>
+
+      <!-- MY TURN banner -->
+      <div class="my-turn-banner" id="myTurnBanner" style="display:none;">
+        <h2>🎤 YOUR TURN!</h2>
+        <p id="challengeText">Complete the lyric!</p>
+      </div>
+
+      <!-- Answer timer (shown only on active player's screen) -->
+      <div id="timerBlock" style="display:none;text-align:center;">
+        <div class="timer-label" id="pTimerLabel">Answer Time</div>
+        <div class="p-timer-val" id="pTimerVal">20</div>
+        <div class="status-text" id="timerHurry" style="display:none;color:var(--red);font-weight:700;">HURRY!</div>
+      </div>
+
+      <!-- Active player (when it's not your turn) -->
+      <div class="p-active-card" id="pActiveCard" style="display:none;">
+        <img class="avatar" id="pActiveAvatar" src="" alt="" style="width:44px;height:44px;" />
+        <div>
+          <div class="p-active-label">Now Playing</div>
+          <div class="p-active-name" id="pActiveName">—</div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div class="status-text" id="pRoundLabel">Round 1</div>
+        </div>
+      </div>
+
+      <!-- Hint (during challenge) -->
+      <div class="hint-text" id="pHintText" style="margin-bottom:8px;display:none;"></div>
+
+      <!-- Judgement result -->
+      <div class="p-judgement" id="pJudgement"></div>
+
+      <!-- My score bar -->
+      <div class="p-score-bar">
+        <div>
+          <div class="my-label">Your Score</div>
+          <div class="my-score" id="myScore">0</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="my-label">Your Rank</div>
+          <div class="my-score" id="myRank">—</div>
+        </div>
+      </div>
+
+      <!-- Mini leaderboard -->
+      <div class="p-lb">
+        <h4>🏆 Leaderboard</h4>
+        <ul class="lb-list" id="pLbList"></ul>
+      </div>
+
+      <!-- Game complete -->
+      <div id="pGameComplete" style="display:none;text-align:center;padding:24px 0;">
+        <div style="font-size:2rem;margin-bottom:8px;">🏆</div>
+        <div style="font-size:1.4rem;font-weight:900;color:var(--gold);">Game Over!</div>
+        <div class="status-text mt-8" id="pWinnerText"></div>
+      </div>
+
+    </div><!-- /gamePad -->
+
+  </div><!-- /join-card -->
+</div>
+
+<script src="/player.js"></script>
+</body>
+</html>

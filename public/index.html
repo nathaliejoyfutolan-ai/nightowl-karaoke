@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NightOwl Karaoke Game Night 🦉</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+</head>
+<body>
+
+<!-- Animated background -->
+<div class="bg-scene">
+  <div class="bg-orb o1"></div>
+  <div class="bg-orb o2"></div>
+  <div class="bg-orb o3"></div>
+</div>
+<div class="music-notes" id="musicNotes"></div>
+<canvas id="confettiCanvas"></canvas>
+
+<!-- ─── GAME START OVERLAY ─── -->
+<div class="game-start-overlay" id="gameStartOverlay">
+  <div class="game-start-text" id="gameStartText">LET'S SING!</div>
+  <div class="game-start-sub" id="gameStartSub">Game starting…</div>
+</div>
+
+<!-- ─── CORRECT OVERLAY ─── -->
+<div class="overlay" id="correctOverlay">
+  <img class="avatar xl correct" id="correctAvatar" src="" alt="" />
+  <div class="overlay-text correct">CORRECT!</div>
+  <div class="overlay-pts">+100 pts</div>
+  <div class="overlay-sub" id="correctName"></div>
+  <span class="overlay-dismiss" id="dismissCorrect">Tap to dismiss</span>
+</div>
+
+<!-- ─── WRONG OVERLAY ─── -->
+<div class="overlay" id="wrongOverlay">
+  <img class="avatar xl wrong" id="wrongAvatar" src="" alt="" />
+  <div class="overlay-text wrong">WRONG!</div>
+  <div class="overlay-sub" id="wrongName"></div>
+  <span class="overlay-dismiss" id="dismissWrong">Tap to dismiss</span>
+</div>
+
+<!-- ─── WINNER OVERLAY ─── -->
+<div class="winner-overlay" id="winnerOverlay">
+  <div class="winner-label">🏆 WINNER!</div>
+  <img class="avatar xxl" id="winnerAvatar" src="" alt="" />
+  <div class="winner-name" id="winnerName"></div>
+  <div class="winner-score" id="winnerScore"></div>
+  <div class="final-lb lb-full" id="finalLb"></div>
+  <button class="btn btn-ghost winner-close-btn" id="winnerClose">View Leaderboard</button>
+</div>
+
+<!-- ─── TOAST ─── -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<!-- ─── MAIN PAGE ─── -->
+<div class="page-wrap">
+
+  <header class="app-header">
+    <div class="app-title">🦉 NightOwl Karaoke Game Night</div>
+    <div class="room-pill">
+      Room: <strong id="roomCodeDisplay">----</strong>
+      <button class="btn btn-ghost btn-sm" id="copyJoinBtn">Copy Join Link</button>
+    </div>
+    <div class="flex-center">
+      <span class="status-text" id="playerCountText">0 players</span>
+    </div>
+  </header>
+
+  <nav class="host-nav">
+    <button class="nav-btn active" data-tab="dashboard" id="navDashboard">🎯 Dashboard</button>
+    <button class="nav-btn" data-tab="setup" id="navSetup" disabled data-tip="Select a game mode first">⚙️ Setup</button>
+    <button class="nav-btn" data-tab="live" id="navLive" disabled data-tip="Start the game to unlock">🎤 Live Game</button>
+    <button class="nav-btn" data-tab="leaderboard" id="navLeaderboard" disabled data-tip="Start the game to unlock">🏆 Leaderboard</button>
+  </nav>
+
+  <!-- Step hint -->
+  <div id="stepHint" style="padding:8px 24px; font-size:0.8rem; color:var(--muted); background:rgba(180,79,255,0.06); border-bottom:1px solid rgba(255,255,255,0.05); display:flex; gap:8px; align-items:center;">
+    <span id="stepHintText">👉 Step 1: Click <strong style="color:var(--purple)">Select Game</strong> on the Dashboard to choose a game mode</span>
+  </div>
+
+  <!-- ════════════════════ DASHBOARD ════════════════════ -->
+  <section class="section active" id="tab-dashboard">
+    <div class="dashboard-top">
+      <h2>NightOwl Karaoke Game Night</h2>
+      <p>Choose your game mode to get started</p>
+    </div>
+
+    <p class="section-label">Choose a Game Mode</p>
+    <div class="mode-cards" id="modeCards">
+      <!-- rendered by host.js -->
+    </div>
+
+    <hr class="sep" />
+
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px;">
+      <p class="section-label" style="margin-bottom:0">Players in Room</p>
+      <span class="status-text" id="dashPlayerCount">0 joined</span>
+    </div>
+    <div class="players-grid" id="dashPlayers">
+      <span class="status-text italic">No players yet — share the join link.</span>
+    </div>
+  </section>
+
+  <!-- ════════════════════ SETUP ════════════════════ -->
+  <section class="section" id="tab-setup">
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:20px;">
+      <div>
+        <p class="section-label" style="margin-bottom:2px">Setting up</p>
+        <h2 style="font-size:1.4rem; font-weight:800;" id="setupModeLabel">—</h2>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="backToDashBtn">← Dashboard</button>
+    </div>
+
+    <!-- Row 1: Game Settings -->
+    <div class="setup-grid">
+      <div class="panel">
+        <h3>⚙️ Game Settings</h3>
+        <label>Number of Rounds</label>
+        <div class="range-row">
+          <input type="range" id="roundsRange" min="1" max="20" value="5" />
+          <span class="range-val" id="roundsVal">5</span>
+        </div>
+        <label>Listening Duration (sec)</label>
+        <div class="range-row">
+          <input type="range" id="listenRange" min="5" max="60" value="15" />
+          <span class="range-val" id="listenVal">15s</span>
+        </div>
+        <label>Blurred Continuation (sec)</label>
+        <div class="range-row">
+          <input type="range" id="blurRange" min="3" max="30" value="10" />
+          <span class="range-val" id="blurVal">10s</span>
+        </div>
+        <label>Answer Time Limit (sec, max 20)</label>
+        <div class="range-row">
+          <input type="range" id="answerRange" min="5" max="20" value="20" />
+          <span class="range-val" id="answerVal">20s</span>
+        </div>
+        <label style="margin-top:8px;">YouTube Playlist (optional)</label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="playlistInput" placeholder="Paste playlist URL or ID" style="margin-bottom:0;flex:1;" />
+          <button class="btn btn-ghost btn-sm" id="loadPlaylistBtn">Load</button>
+        </div>
+        <div id="setupYtPreview" style="display:none;margin-top:10px;">
+          <iframe id="setupYtFrame" width="100%" height="140" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen style="border-radius:8px;"></iframe>
+          <p class="hint-text" id="setupYtMsg"></p>
+        </div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn btn-primary" id="saveSetupBtn">Save Settings</button>
+        </div>
+        <p class="status-text italic mt-8" id="setupSavedMsg" style="display:none">✓ Settings saved!</p>
+      </div>
+
+      <div class="panel">
+        <h3>👥 Joined Players</h3>
+        <div class="players-grid" id="setupPlayers">
+          <span class="status-text italic">No players yet.</span>
+        </div>
+        <hr class="sep" />
+        <p class="status-text" style="margin-bottom:14px;">Players can join anytime. You need at least 1 player to start.</p>
+        <button class="btn btn-primary" id="startGameBtn" style="width:100%;justify-content:center;font-size:1rem;padding:14px;">🎤 Start Game</button>
+        <div class="btn-row mt-12">
+          <button class="btn btn-ghost" id="resetGameBtn">↺ Reset Game</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 2: Songs full-width -->
+    <div class="panel" style="margin-top:18px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+        <div>
+          <h3 style="margin-bottom:2px;">🎵 Songs for Each Round</h3>
+          <p class="hint-text">Paste a YouTube video URL or embed code for each round. The song will auto-load and seek to the start time when the turn begins.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;">
+          <button class="btn btn-ghost btn-sm" id="addSongBtn">+ Add Round</button>
+          <button class="btn btn-primary btn-sm" id="saveSongsBtn">💾 Save Songs</button>
+        </div>
+      </div>
+
+      <!-- Column headers -->
+      <div style="display:grid;grid-template-columns:60px 1fr 2fr 90px auto;gap:8px;padding:0 4px 6px;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:8px;">
+        <span class="section-label" style="margin-bottom:0;">Round</span>
+        <span class="section-label" style="margin-bottom:0;">Song Name</span>
+        <span class="section-label" style="margin-bottom:0;">YouTube URL or Embed Code</span>
+        <span class="section-label" style="margin-bottom:0;">Start At</span>
+        <span></span>
+      </div>
+
+      <div id="songList" style="display:flex;flex-direction:column;gap:8px;"></div>
+
+      <div class="btn-row mt-12">
+        <button class="btn btn-ghost btn-sm" id="addSongBtn2">+ Add Round</button>
+      </div>
+      <p class="status-text italic mt-8" id="songsSavedMsg" style="display:none;">✓ Songs saved!</p>
+    </div>
+  </section>
+
+  <!-- ════════════════════ LIVE GAME ════════════════════ -->
+  <section class="section" id="tab-live">
+    <div class="live-layout">
+
+      <!-- LEFT / CENTER COLUMN -->
+      <div class="live-main">
+
+        <!-- Phase banner -->
+        <div class="phase-banner ph-lobby" id="phaseBanner">Waiting to start…</div>
+
+        <!-- YouTube Player -->
+        <div class="video-wrap">
+          <div id="ytPlayer"></div>
+          <div class="video-blur-overlay" id="videoBlurOverlay">
+            <span class="blur-note">🎵</span>
+            <span>LISTEN CAREFULLY…</span>
+            <span class="blur-note" style="animation-delay:0.4s">🎶</span>
+          </div>
+        </div>
+        <div class="video-controls">
+          <button class="btn btn-ghost btn-sm" id="vcPlay">▶ Play</button>
+          <button class="btn btn-ghost btn-sm" id="vcPause">⏸ Pause</button>
+          <button class="btn btn-ghost btn-sm" id="vcBlur">🙈 Blur Video</button>
+          <button class="btn btn-ghost btn-sm" id="vcReveal">👁 Reveal Video</button>
+        </div>
+
+        <!-- Active Player + Round -->
+        <div class="active-player-card">
+          <img class="avatar lg active-ring" id="liveActiveAvatar" src="" alt="" />
+          <div class="active-player-info">
+            <div class="active-player-label">Now Playing</div>
+            <div class="active-player-name" id="liveActiveName">—</div>
+          </div>
+          <div>
+            <div class="round-badge" id="liveRoundBadge">Round 1 / 5</div>
+            <div class="status-text mt-8" id="liveSongLabel" style="color:var(--cyan);font-size:0.8rem;"></div>
+            <div class="status-text" id="liveNextPlayer">Next: —</div>
+          </div>
+        </div>
+
+        <!-- Turn order strip -->
+        <div>
+          <p class="section-label">Turn Order</p>
+          <div class="turn-strip" id="turnStrip"></div>
+        </div>
+
+        <!-- Timer -->
+        <div class="timer-wrap" id="timerWrap" style="display:none">
+          <div class="timer-label" id="timerLabel">Timer</div>
+          <div class="timer-val" id="timerVal">—</div>
+        </div>
+
+        <!-- Answer panel -->
+        <div class="answer-panel" id="answerPanel">
+          <h3 style="margin-bottom:12px; font-size:0.9rem; color:var(--purple); font-weight:700;" id="answerLabelText">Answer</h3>
+          <label id="answerFieldLabel">Answer</label>
+          <input type="text" id="answerInput" placeholder="Type the correct answer…" />
+          <label>Optional Hint</label>
+          <input type="text" id="hintInput" placeholder="Hint for players…" />
+          <label>Song Start Time <span style="color:var(--muted);font-weight:400;">(where to begin — e.g. 0:45 or 90)</span></label>
+          <input type="text" id="startTimeInput" placeholder="0:00" style="font-variant-numeric:tabular-nums;max-width:120px;margin-bottom:12px;" />
+          <label>Optional Round Note</label>
+          <input type="text" id="noteInput" placeholder="Any note for this round…" />
+          <div class="btn-row">
+            <button class="btn btn-primary btn-sm" id="saveAnswerBtn">Save Answer</button>
+            <button class="btn btn-ghost btn-sm" id="revealAnswerBtn">👁 Reveal Answer</button>
+          </div>
+          <div class="answer-reveal" id="answerReveal"></div>
+          <div class="hint-text" id="hintReveal"></div>
+        </div>
+
+        <!-- Turn Controls -->
+        <div class="panel">
+          <h3>🎮 Turn Controls</h3>
+          <div class="btn-row">
+            <button class="btn btn-primary" id="startTurnBtn">▶ Start Turn</button>
+            <button class="btn btn-cyan" id="continueBlurBtn" disabled>🙈 Continue Blurred</button>
+            <button class="btn btn-ghost" id="openChallengeBtn" disabled>⚡ Open Challenge</button>
+            <button class="btn btn-ghost" id="resetTurnBtn">↺ Reset Turn</button>
+            <button class="btn btn-ghost" id="nextTurnBtn" disabled>⏭ Next Turn</button>
+            <button class="btn btn-red btn-sm" id="endGameBtn">⏹ End Game</button>
+          </div>
+
+          <!-- Judge controls -->
+          <hr class="sep" />
+          <p class="section-label" style="margin-bottom:8px;">Judge</p>
+          <div class="judge-row">
+            <button class="btn btn-green" id="correctBtn" disabled>✅ CORRECT +100</button>
+            <button class="btn btn-red" id="wrongBtn" disabled>❌ WRONG</button>
+          </div>
+        </div>
+
+      </div><!-- /live-main -->
+
+      <!-- RIGHT COLUMN: Leaderboard -->
+      <div>
+        <div class="leaderboard-panel">
+          <h3>🏆 Leaderboard</h3>
+          <ul class="lb-list" id="liveLb"></ul>
+        </div>
+      </div>
+
+    </div><!-- /live-layout -->
+  </section>
+
+  <!-- ════════════════════ LEADERBOARD ════════════════════ -->
+  <section class="section" id="tab-leaderboard">
+    <div class="dashboard-top">
+      <h2 id="lbPageTitle">Leaderboard</h2>
+      <p id="lbPageSub">Live standings</p>
+    </div>
+    <ul class="lb-list lb-full" id="fullLb"></ul>
+    <div class="btn-row mt-20" style="justify-content:center;" id="lbActions">
+      <button class="btn btn-ghost" id="goLiveBtn">← Back to Game</button>
+    </div>
+  </section>
+
+</div><!-- /page-wrap -->
+
+<script src="/host.js"></script>
+</body>
+</html>
