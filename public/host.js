@@ -45,15 +45,20 @@ window.onYouTubeIframeAPIReady = function () {
   ytReady = true;
   ytPlayer = new YT.Player("ytPlayer", {
     height: "100%", width: "100%",
-    playerVars: { rel: 0, modestbranding: 1, playsinline: 1 },
-    events: { onReady: onPlayerReady }
+    playerVars: { rel: 0, playsinline: 1, autoplay: 1, origin: window.location.origin },
+    events: { onReady: onPlayerReady, onError: onPlayerError }
   });
 };
 
 function onPlayerReady() {
+  console.log("YouTube player ready, origin:", window.location.origin);
   if (currentState?.playlistId) {
     ytPlayer.loadPlaylist({ list: currentState.playlistId, listType: "playlist" });
   }
+}
+
+function onPlayerError(e) {
+  console.error("YouTube player error:", e.data);
 }
 
 function ytPlay(startTime)  {
